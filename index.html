@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Swivel Way — LMS Course Design</title>
+  <style>
+    :root {
+      --brand:       #1a1a2e;
+      --accent:      #e94560;
+      --accent-soft: #fde8ec;
+      --gold:        #f5a623;
+      --surface:     #ffffff;
+      --surface-2:   #f7f8fc;
+      --surface-3:   #eef0f8;
+      --border:      #dde1f0;
+      --text:        #1a1a2e;
+      --text-muted:  #6b7280;
+      --text-light:  #9ca3af;
+      --radius:      10px;
+      --shadow:      0 2px 16px rgba(26,26,46,.08);
+      --shadow-lg:   0 8px 40px rgba(26,26,46,.14);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--surface-2);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--brand);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .nav-logo {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: .5px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-tabs { display: flex; gap: .25rem; }
+    .nav-tab {
+      color: rgba(255,255,255,.65);
+      background: none;
+      border: none;
+      padding: .45rem .9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: all .18s;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .nav-tab.active { background: var(--accent); color: #fff; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--brand) 0%, #16213e 60%, #0f3460 100%);
+      color: #fff;
+      padding: 4rem 2rem 3.5rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(229,69,96,.2);
+      color: var(--accent);
+      border: 1px solid rgba(229,69,96,.4);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: .3rem .8rem;
+      border-radius: 20px;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+    .hero h1 em { color: var(--accent); font-style: normal; }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,.7);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+      display: block;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .hero-stat-label {
+      font-size: .75rem;
+      color: rgba(255,255,255,.55);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    /* ── PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── SECTION CARD ── */
+    .section-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.75rem;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1.2rem 1.6rem;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header:hover { background: var(--surface-3); }
+    .section-icon {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .section-title { font-weight: 700; font-size: 1rem; flex: 1; }
+    .section-num {
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+    .chevron {
+      color: var(--text-muted);
+      transition: transform .2s;
+      font-size: .85rem;
+    }
+    .section-card.open .chevron { transform: rotate(180deg); }
+    .section-body {
+      display: none;
+      padding: 1.6rem;
+    }
+    .section-card.open .section-body { display: block; }
+
+    /* ── TYPOGRAPHY ── */
+    h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: .6rem; }
+    h3 { font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 .5rem; color: var(--brand); }
+    h4 { font-size: .92rem; font-weight: 700; margin: 1rem 0 .35rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; }
+    p { margin-bottom: .85rem; font-size: .95rem; }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+    li { font-size: .95rem; margin-bottom: .3rem; }
+    strong { font-weight: 700; }
+    em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+    /* ── OBJECTIVE TABLE ── */
+    .obj-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .75rem; }
+    .obj-table th {
+      background: var(--brand);
+      color: #fff;
+      padding: .6rem .9rem;
+      text-align: left;
+      font-size: .75rem;
+      letter-spacing: .5px;
+    }
+    .obj-table td { padding: .7rem .9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .obj-table tr:last-child td { border-bottom: none; }
+    .obj-table tr:nth-child(even) td { background: var(--surface-2); }
+    .bloom-badge {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .15rem .5rem;
+      border-radius: 20px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    /* ── MODULE CARDS ── */
+    .module-grid { display: grid; gap: 1rem; }
+    .module-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      padding: .9rem 1.1rem;
+      background: var(--brand);
+      color: #fff;
+    }
+    .module-num {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .module-title { font-weight: 700; font-size: .95rem; flex: 1; }
+    .module-meta {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      font-size: .7rem;
+    }
+    .module-tag {
+      background: rgba(255,255,255,.15);
+      color: rgba(255,255,255,.9);
+      padding: .15rem .55rem;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .module-body { padding: 1rem 1.1rem; background: var(--surface); }
+    .module-purpose {
+      font-size: .88rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: .75rem;
+      padding-bottom: .75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .module-points { margin: 0; padding-left: 1.2rem; }
+    .module-points li { font-size: .88rem; margin-bottom: .2rem; }
+    .module-activity {
+      margin-top: .85rem;
+      padding: .75rem .9rem;
+      background: var(--accent-soft);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      font-size: .85rem;
+    }
+    .module-activity strong { color: var(--accent); }
+    .module-trigger {
+      margin-top: .75rem;
+      padding: .5rem .75rem;
+      background: var(--surface-3);
+      border-radius: 6px;
+      font-size: .8rem;
+      color: var(--text-muted);
+    }
+    .module-trigger span { font-weight: 600; color: var(--text); }
+
+    /* ── PILLARS ── */
+    .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .pillar-card {
+      padding: 1.1rem;
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .pillar-card:nth-child(1) { background: #e8f4fd; border-top: 3px solid #3b82f6; }
+    .pillar-card:nth-child(2) { background: #fef3e2; border-top: 3px solid var(--gold); }
+    .pillar-card:nth-child(3) { background: var(--accent-soft); border-top: 3px solid var(--accent); }
+    .pillar-name { font-weight: 800; font-size: .95rem; margin-bottom: .35rem; }
+    .pillar-def { font-size: .82rem; color: var(--text-muted); }
+
+    /* ── COMPLETION CRITERIA ── */
+    .criteria-list { list-style: none; padding: 0; }
+    .criteria-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      padding: .65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .92rem;
+    }
+    .criteria-list li:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .criteria-alert {
+      margin-top: 1rem;
+      padding: .75rem 1rem;
+      background: #fff8e6;
+      border: 1px solid #fcd34d;
+      border-radius: var(--radius);
+      font-size: .85rem;
+    }
+
+    /* ── SPEC TABLE ── */
+    .spec-table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    .spec-table th {
+      background: var(--surface-3);
+      text-align: left;
+      padding: .55rem .8rem;
+      font-size: .75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 2px solid var(--border);
+    }
+    .spec-table td { padding: .55rem .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .spec-table tr:last-child td { border-bottom: none; }
+    .spec-table td:first-child { font-weight: 600; color: var(--brand); width: 38%; }
+
+    /* ── ACTION PLAN ── */
+    .action-plan {
+      background: var(--surface-2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .action-plan-header {
+      background: var(--brand);
+      color: #fff;
+      padding: 1rem 1.4rem;
+    }
+    .action-plan-header h3 { color: #fff; margin: 0 0 .2rem; font-size: 1rem; }
+    .action-plan-header p { color: rgba(255,255,255,.6); font-size: .8rem; margin: 0; }
+    .action-part { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); }
+    .action-part:last-child { border-bottom: none; }
+    .action-part-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: .6rem;
+    }
+    .field-line {
+      border: none;
+      border-bottom: 1px solid var(--border);
+      background: none;
+      width: 100%;
+      padding: .4rem 0;
+      font-size: .88rem;
+      color: var(--text-muted);
+      font-family: inherit;
+      margin-bottom: .5rem;
+    }
+    .field-label { font-size: .8rem; color: var(--text-muted); margin-bottom: .2rem; font-weight: 600; }
+    .rating-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; flex-wrap: wrap; }
+    .rating-name { font-size: .88rem; flex: 1; min-width: 160px; }
+    .rating-dots { display: flex; gap: .35rem; }
+    .dot {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .dot:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .ssc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-top: .5rem; }
+    .ssc-box {
+      padding: .7rem .85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .ssc-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; margin-bottom: .35rem; }
+    .ssc-box:nth-child(1) .ssc-label { color: var(--accent); }
+    .ssc-box:nth-child(2) .ssc-label { color: #16a34a; }
+    .ssc-box:nth-child(3) .ssc-label { color: #2563eb; }
+
+    /* ── ASSESSMENT QUESTIONS ── */
+    .question-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .question-card:last-child { margin-bottom: 0; }
+    .question-header {
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      padding: .9rem 1.1rem;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .q-num {
+      background: var(--brand);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 800;
+      padding: .2rem .5rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .q-text { font-size: .92rem; font-weight: 600; line-height: 1.5; }
+    .question-options { padding: .85rem 1.1rem; }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: .7rem;
+      padding: .5rem .65rem;
+      border-radius: 6px;
+      margin-bottom: .35rem;
+      font-size: .87rem;
+      border: 1px solid transparent;
+      transition: all .15s;
+    }
+    .option:last-child { margin-bottom: 0; }
+    .option.correct { background: #f0fdf4; border-color: #86efac; }
+    .option.incorrect { opacity: .65; }
+    .option-letter {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .option.correct .option-letter { border-color: #16a34a; background: #16a34a; color: #fff; }
+    .question-rationale {
+      margin: 0 1.1rem .85rem;
+      padding: .7rem .9rem;
+      background: #f0fdf4;
+      border-left: 3px solid #16a34a;
+      border-radius: 0 6px 6px 0;
+      font-size: .83rem;
+      color: #166534;
+    }
+    .question-rationale strong { color: #166534; }
+    .q-meta {
+      display: flex;
+      gap: .5rem;
+      padding: .65rem 1.1rem;
+      background: var(--surface-3);
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .q-meta-tag {
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .15rem .5rem;
+      border-radius: 20px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── METADATA GRID ── */
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .75rem; }
+    .meta-item {
+      padding: .75rem .9rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .meta-key { font-size: .72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: .25rem; }
+    .meta-val { font-size: .9rem; font-weight: 500; color: var(--text); }
+
+    /* ── TEMPLATE PAGE ── */
+    .template-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .template-section-header {
+      padding: .9rem 1.3rem;
+      background: var(--brand);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .template-section-header h3 { color: #fff; margin: 0; font-size: .95rem; }
+    .template-section-header .ts-num {
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      background: rgba(255,255,255,.15);
+      border-radius: 4px;
+      letter-spacing: .5px;
+    }
+    .template-section-body { padding: 1.2rem 1.3rem; }
+    .formula-box {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .85rem 1rem;
+      font-size: .85rem;
+      color: var(--brand);
+      margin: .75rem 0;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .placeholder { color: var(--accent); font-weight: 600; }
+    .rule-list { list-style: none; padding: 0; }
+    .rule-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .4rem 0;
+      font-size: .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .rule-list li:last-child { border-bottom: none; }
+    .rule-list li::before {
+      content: '→';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── TIPS CALLOUT ── */
+    .tip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .85rem; margin-top: .75rem; }
+    .tip-card {
+      padding: .9rem 1rem;
+      border-radius: var(--radius);
+      border: 1px solid;
+    }
+    .tip-card.do { background: #f0fdf4; border-color: #86efac; }
+    .tip-card.dont { background: #fff1f2; border-color: #fecdd3; }
+    .tip-card-label {
+      font-size: .7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: .4rem;
+    }
+    .tip-card.do .tip-card-label { color: #16a34a; }
+    .tip-card.dont .tip-card-label { color: var(--accent); }
+    .tip-card ul { padding-left: 1rem; margin: 0; }
+    .tip-card li { font-size: .83rem; margin-bottom: .2rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: .78rem;
+      color: var(--text-light);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .nav-logo { font-size: .9rem; }
+      .nav-tab { font-size: .75rem; padding: .35rem .6rem; }
+      main { padding: 1.5rem 1rem 4rem; }
+      .hero { padding: 2.5rem 1rem 2rem; }
+      .ssc-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SWIVEL <span>LMS</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('course')">SWV-001 Course</button>
+    <button class="nav-tab" onclick="showPage('template')">Module Template</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Course ID: SWV-001 &nbsp;·&nbsp; Onboarding Series</div>
+  <h1>The Swivel Way:<br><em>Premium Mindset</em> &amp; Client-Ready Communication</h1>
+  <p class="hero-sub">Master the mindset, language, and communication standards that define every Swivel client interaction — starting day one.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="hero-stat-num">52</span>
+      <span class="hero-stat-label">Minutes</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">6</span>
+      <span class="hero-stat-label">Modules</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">80%</span>
+      <span class="hero-stat-label">Pass Score</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">4</span>
+      <span class="hero-stat-label">Objectives</span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════════════════════════════════ -->
+<!--              COURSE PAGE              -->
+<!-- ══════════════════════════════════════ -->
+<div id="page-course" class="page active">
+
+  <!-- OVERVIEW -->
+  <div class="section-card open">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#e8f4fd;">📋</div>
+      <span class="section-num">Section 1</span>
+      <span class="section-title">Course Overview</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>At Swivel, every conversation is a premium experience — or it's a missed opportunity. This course introduces you to the mindset, language standards, and communication behaviors that define what it means to work here.</p>
+      <p>You'll learn how to carry the Swivel brand in every client interaction, handle high-stakes conversations with confidence, and represent our values before you've sent a single email or joined your first call.</p>
+      <p>By the end, you'll know exactly what "client-ready" looks like here — and you'll have the tools to get there on day one.</p>
+
+      <h3>The Three Pillars</h3>
+      <div class="pillars">
+        <div class="pillar-card">
+          <div class="pillar-name">Ownership</div>
+          <div class="pillar-def">I am the client's experience, not just part of it.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-name">Precision</div>
+          <div class="pillar-def">Vague is never premium. Every word, timeline, and commitment is exact.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-name">Warmth with Authority</div>
+          <div class="pillar-def">Approachable doesn't mean uncertain. We are confident and kind.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEARNING OBJECTIVES -->
+  <div class="section-card open">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#fde8ec;">🎯</div>
+      <span class="section-num">Section 2</span>
+      <span class="section-title">Learning Objectives</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Upon completing this course, learners will be able to:</p>
+      <table class="obj-table">
+        <thead>
+          <tr><th>#</th><th>Objective</th><th>Level</th><th>Module</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Articulate</strong> the three pillars of the Swivel Premium Mindset and explain how each shapes client interactions</td>
+            <td><span class="bloom-badge">Understand</span></td>
+            <td>Module 2</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Apply</strong> Swivel's client communication standards to written and verbal scenarios, distinguishing on-brand from off-brand responses</td>
+            <td><span class="bloom-badge">Apply</span></td>
+            <td>Modules 3 & 4</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Identify</strong> the critical moments in a client interaction where tone, language, and responsiveness determine satisfaction</td>
+            <td><span class="bloom-badge">Analyze</span></td>
+            <td>Module 4</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Construct</strong> a personal 30-day communication action plan aligned to Swivel's standards and your specific role</td>
+            <td><span class="bloom-badge">Create</span></td>
+            <td>Module 5</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODULE BREAKDOWN -->
+  <div class="section-card open">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#f0fdf4;">📦</div>
+      <span class="section-num">Section 3</span>
+      <span class="section-title">Module Breakdown — 52 Minutes Total</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="module-grid">
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">1</div>
+            <div class="module-title">Welcome to the Swivel Standard</div>
+            <div class="module-meta">
+              <span class="module-tag">6 min</span>
+              <span class="module-tag">Video</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Set the stakes. Establish relevance. Answer "why does this matter?" before anything else.</div>
+            <ul class="module-points">
+              <li>Direct message from senior leadership — why communication standards exist at Swivel (2 min)</li>
+              <li>What "premium" actually means here — not luxury, but intentionality (2 min)</li>
+              <li>Course roadmap and the question to hold throughout: <em>"Would a Swivel client feel well-served by this?"</em> (2 min)</li>
+            </ul>
+            <div class="module-activity">
+              <strong>Reflection Prompt:</strong> "Think of one interaction you've had as a client that felt genuinely premium. What made it feel that way?"
+            </div>
+            <div class="module-trigger">Completion: <span>Video 100% watched (no skip)</span></div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">2</div>
+            <div class="module-title">The Three Pillars of the Premium Mindset</div>
+            <div class="module-meta">
+              <span class="module-tag">10 min</span>
+              <span class="module-tag">Video + Slides</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Introduce the primary mental model. Give learners an anchor they'll use in every subsequent module.</div>
+            <ul class="module-points">
+              <li>Visual framework introducing all three pillars (2 min)</li>
+              <li>Pillar 1 — Ownership: what it looks like, sounds like, and where it fails (2.5 min)</li>
+              <li>Pillar 2 — Precision: language standards, why ambiguity costs trust (2.5 min)</li>
+              <li>Pillar 3 — Warmth with Authority: tone calibration, the "confident + kind" model (2.5 min)</li>
+              <li>90-second scenario demonstrating all three pillars in a single client interaction (1.5 min)</li>
+            </ul>
+            <div class="module-activity">
+              <strong>Knowledge Check (×2, ungraded):</strong> Which response demonstrates Precision? / Which describes Ownership in practice?
+            </div>
+            <div class="module-trigger">Completion: <span>All slides advanced + knowledge check submitted</span></div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">3</div>
+            <div class="module-title">What Client-Ready Looks Like (Model the Behavior)</div>
+            <div class="module-meta">
+              <span class="module-tag">10 min</span>
+              <span class="module-tag">Scenario Video</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Show standards in action so learners can recognize and name behaviors before they practice them.</div>
+            <ul class="module-points">
+              <li>Setup: "You'll watch two versions of the same client interaction" (30 sec)</li>
+              <li>Version A — Off-brand: vague, reactive, mildly dismissive tone (3 min)</li>
+              <li>Pause: "What specifically felt off? Name it." (30 sec)</li>
+              <li>Version B — On-brand: same scenario, Swivel standards applied (3 min)</li>
+              <li>Annotated debrief: exactly what changed and why it matters (2 min)</li>
+              <li>6 specific phrases that signal each pillar in real conversation (1 min)</li>
+            </ul>
+            <div class="module-activity">
+              <strong>Observation Worksheet:</strong> "List two specific things present in Version B that were absent in Version A. Name the Swivel pillar each demonstrates."
+            </div>
+            <div class="module-trigger">Completion: <span>Video 100% watched + observation activity submitted</span></div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">4</div>
+            <div class="module-title">Your Turn — Apply the Standards</div>
+            <div class="module-meta">
+              <span class="module-tag">12 min</span>
+              <span class="module-tag">Branching Scenario</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Low-stakes practice environment. Apply the three pillars. Experience consequences of off-brand choices.</div>
+            <p style="font-size:.87rem;color:var(--text-muted);margin-bottom:.6rem;"><strong>Scenario:</strong> You're 3 weeks in. Key client Marcus emails at 4:45pm Friday — his deliverable wasn't delivered. You have 3 decisions over the next 24 hours.</p>
+            <ul class="module-points">
+              <li><strong>Decision 1:</strong> How do you respond to Marcus's Friday email? (Ownership test)</li>
+              <li><strong>Decision 2:</strong> How do you explain the situation to your manager? (Precision test)</li>
+              <li><strong>Decision 3:</strong> How do you deliver the Tuesday follow-up? (All three pillars)</li>
+            </ul>
+            <div class="module-activity">
+              <strong>Branching Scenario:</strong> 3 decision points, each with 3 options and coaching feedback on incorrect paths. All paths explorable.
+            </div>
+            <div class="module-trigger">Completion: <span>All three decision points reached + scenario completed</span></div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">5</div>
+            <div class="module-title">Making It Yours — Personal Application</div>
+            <div class="module-meta">
+              <span class="module-tag">8 min</span>
+              <span class="module-tag">Reading + Reflection</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Bridge course content to the learner's actual role, relationships, and next real interaction.</div>
+            <ul class="module-points">
+              <li>"The Gap Between Knowing and Doing" — why mindset training fails without deliberate practice (2 min read)</li>
+              <li>The 30-Day Communication Audit: three behaviors to track in your own work (2 min read)</li>
+              <li>Action Plan completion — "This isn't homework. This is your performance plan." (3.5 min)</li>
+            </ul>
+            <div class="module-activity">
+              <strong>Action Plan Submission (see Section 6):</strong> Written commitments stored in learner record. Optional share with manager.
+            </div>
+            <div class="module-trigger">Completion: <span>Time-on-page ≥ 3 min + Action Plan submitted</span></div>
+          </div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-header">
+            <div class="module-num">6</div>
+            <div class="module-title">Assessment + Certification</div>
+            <div class="module-meta">
+              <span class="module-tag">6 min</span>
+              <span class="module-tag">Graded Assessment</span>
+            </div>
+          </div>
+          <div class="module-body">
+            <div class="module-purpose">Verify learning. Produce a completion record. Close on a forward-facing note.</div>
+            <ul class="module-points">
+              <li>10 questions drawn from a randomized pool of 15</li>
+              <li>Mix of multiple choice + scenario-based ("select best response") questions</li>
+              <li>Immediate per-question feedback with rationale</li>
+              <li>Up to 3 attempts — failure path routes to specific review modules</li>
+              <li>Auto-generated certificate on pass: <em>"Swivel Communication Standards Certified"</em></li>
+            </ul>
+            <div class="module-activity">
+              <strong>Closing Message:</strong> "You now have the language, mindset, and standards that define the Swivel experience. Every client interaction from here is a chance to make those real. Go be client-ready."
+            </div>
+            <div class="module-trigger">Completion: <span>Assessment passed at ≥ 80%</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETION CRITERIA -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#f0fdf4;">✅</div>
+      <span class="section-num">Section 4</span>
+      <span class="section-title">Completion Criteria</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <ul class="criteria-list">
+        <li><div class="check-box"></div><div>All 6 modules opened and marked complete in LMS</div></li>
+        <li><div class="check-box"></div><div>Minimum time-on-course: <strong>40 minutes</strong> (LMS-tracked)</div></li>
+        <li><div class="check-box"></div><div>Branching scenario (Module 4): all three decision points reached</div></li>
+        <li><div class="check-box"></div><div>Reflection/Action Plan (Module 5): submitted — not graded for correctness</div></li>
+        <li><div class="check-box"></div><div>Knowledge Assessment (Module 6): score <strong>≥ 80%</strong> — up to 3 attempts</div></li>
+        <li><div class="check-box"></div><div>Course completion survey: required (3 questions, ~60 seconds)</div></li>
+      </ul>
+      <div class="criteria-alert">
+        ⚠️ <strong>Escalation path:</strong> Incomplete after 5 business days → auto-reminder. Incomplete after 10 business days → manager notification. Assessment attempt 3 failure → manager notified + 1:1 coaching triggered.
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH SPECS -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#f3e8ff;">⚙️</div>
+      <span class="section-num">Section 5</span>
+      <span class="section-title">LMS Technical Specifications</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <h3>Video</h3>
+      <table class="spec-table">
+        <thead><tr><th>Spec</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Resolution</td><td>1920×1080 (1080p minimum)</td></tr>
+          <tr><td>Aspect Ratio</td><td>16:9</td></tr>
+          <tr><td>Frame Rate</td><td>30fps</td></tr>
+          <tr><td>Audio</td><td>Stereo, –14 LUFS, no background noise</td></tr>
+          <tr><td>Captions</td><td>Required — SRT file delivered with every video</td></tr>
+          <tr><td>Format</td><td>MP4, H.264 codec · Max 500MB per file</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Assessment</h3>
+      <table class="spec-table">
+        <thead><tr><th>Spec</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Question Pool</td><td>15 questions → 10 served per attempt (randomized)</td></tr>
+          <tr><td>Passing Score</td><td>80%</td></tr>
+          <tr><td>Attempts</td><td>3 maximum with defined escalation path</td></tr>
+          <tr><td>Feedback</td><td>Immediate per-question: answer + 1–2 sentence rationale</td></tr>
+          <tr><td>Types</td><td>Multiple choice (single answer) + scenario-based</td></tr>
+        </tbody>
+      </table>
+
+      <h3>SCORM / Delivery</h3>
+      <table class="spec-table">
+        <thead><tr><th>Spec</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Standard</td><td>SCORM 1.2 (xAPI available on request)</td></tr>
+          <tr><td>Completion Trigger</td><td><code>cmi.core.lesson_status = passed</code></td></tr>
+          <tr><td>Suspend/Resume</td><td>Required on all modules</td></tr>
+          <tr><td>Mobile</td><td>Responsive — tested iOS Safari 15+ and Android Chrome</td></tr>
+          <tr><td>Accessibility</td><td>WCAG 2.1 Level AA — captions, alt text, keyboard navigation</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ACTION PLAN -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#fff8e1;">📝</div>
+      <span class="section-num">Section 6</span>
+      <span class="section-title">Reflection &amp; Action Plan Template</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:1rem;">This is the exact form learners complete in Module 5. Delivered in-LMS as a text entry form and/or downloadable PDF.</p>
+      <div class="action-plan">
+        <div class="action-plan-header">
+          <h3>The Swivel Way — My Client Communication Action Plan</h3>
+          <p>Module 5 · Submitted to LMS · Optional share with manager</p>
+        </div>
+
+        <div class="action-part">
+          <div class="action-part-title">Part 1 — My Takeaway</div>
+          <div class="field-label">The one thing from this course that will most change how I communicate with clients:</div>
+          <input class="field-line" type="text" placeholder="Write 3–5 sentences…" />
+        </div>
+
+        <div class="action-part">
+          <div class="action-part-title">Part 2 — Honest Self-Assessment (1 = not yet · 5 = consistently)</div>
+          <div class="rating-row">
+            <span class="rating-name"><strong>Ownership</strong> — I treat every client interaction as mine to own</span>
+            <div class="rating-dots">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="rating-row">
+            <span class="rating-name"><strong>Precision</strong> — My commitments are specific and exact</span>
+            <div class="rating-dots">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="rating-row">
+            <span class="rating-name"><strong>Warmth with Authority</strong> — I'm confident and approachable</span>
+            <div class="rating-dots">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="field-label" style="margin-top:.75rem;">My focus area:</div>
+          <input class="field-line" type="text" placeholder="The pillar I'll work on first and why…" />
+        </div>
+
+        <div class="action-part">
+          <div class="action-part-title">Part 3 — My 7-Day Commitment</div>
+          <div class="field-label">Situation (next email, Thursday's call, etc.):</div>
+          <input class="field-line" type="text" placeholder="Specific upcoming interaction…" />
+          <div class="field-label">What I'll do differently:</div>
+          <input class="field-line" type="text" placeholder="Concrete behavior change…" />
+          <div class="field-label">How I'll know I did it:</div>
+          <input class="field-line" type="text" placeholder="Observable evidence…" />
+        </div>
+
+        <div class="action-part">
+          <div class="action-part-title">Part 4 — Stop / Start / Continue</div>
+          <div class="ssc-grid">
+            <div class="ssc-box">
+              <div class="ssc-label">Stop</div>
+              <input class="field-line" type="text" placeholder="e.g. saying 'I'll try'" />
+            </div>
+            <div class="ssc-box">
+              <div class="ssc-label">Start</div>
+              <input class="field-line" type="text" placeholder="e.g. naming next steps in writing" />
+            </div>
+            <div class="ssc-box">
+              <div class="ssc-label">Continue</div>
+              <input class="field-line" type="text" placeholder="Something already working well" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSESSMENT QUESTIONS -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#fef3e2;">❓</div>
+      <span class="section-num">Section 7</span>
+      <span class="section-title">Sample Assessment Questions (5 of 15)</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem;">Full question bank contains 15 questions. 10 served per attempt, randomized. All questions test Apply, Analyze, or Evaluate — not recall. Correct answers shown for design review purposes.</p>
+
+      <div class="question-card">
+        <div class="question-header">
+          <span class="q-num">Q1</span>
+          <span class="q-text">Which of the following best describes the Ownership pillar of the Swivel Premium Mindset?</span>
+        </div>
+        <div class="question-options">
+          <div class="option incorrect"><span class="option-letter">A</span>Ensuring you complete your assigned tasks before the deadline</div>
+          <div class="option correct"><span class="option-letter">B</span>Treating every client interaction as your personal responsibility, regardless of who else is involved</div>
+          <div class="option incorrect"><span class="option-letter">C</span>Taking credit for positive outcomes and escalating negative ones to your manager</div>
+          <div class="option incorrect"><span class="option-letter">D</span>Owning your mistakes by apologizing when something goes wrong</div>
+        </div>
+        <div class="question-rationale"><strong>Why B:</strong> Ownership means the client's experience is yours to shape — not just the tasks assigned to you. Options A and D are partial definitions; C describes the opposite of ownership.</div>
+        <div class="q-meta">
+          <span class="q-meta-tag">Objective 1</span>
+          <span class="q-meta-tag">Understand</span>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-header">
+          <span class="q-num">Q2</span>
+          <span class="q-text">A client asks for a project timeline update. Which response best demonstrates the Precision pillar?</span>
+        </div>
+        <div class="question-options">
+          <div class="option incorrect"><span class="option-letter">A</span>"We're on track and should have something to you soon."</div>
+          <div class="option incorrect"><span class="option-letter">B</span>"Things are moving along well — I'll be in touch when there's news."</div>
+          <div class="option correct"><span class="option-letter">C</span>"The final report will be in your inbox by Thursday, November 14th at 3pm ET. If anything changes, I'll let you know by EOD Wednesday."</div>
+          <div class="option incorrect"><span class="option-letter">D</span>"I'm still confirming the details but it's looking good."</div>
+        </div>
+        <div class="question-rationale"><strong>Why C:</strong> Precision means specific dates, times, and clear escalation paths — not reassuring language. Options A, B, and D use vague language that leaves the client without actionable information.</div>
+        <div class="q-meta">
+          <span class="q-meta-tag">Objective 2</span>
+          <span class="q-meta-tag">Apply</span>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-header">
+          <span class="q-num">Q3</span>
+          <span class="q-text">You receive a tense email from a client who feels their concern wasn't addressed. You know the issue was resolved — there was a miscommunication. What is the most Swivel-aligned first response?</span>
+        </div>
+        <div class="question-options">
+          <div class="option incorrect"><span class="option-letter">A</span>Reply with the documentation proving the issue was resolved</div>
+          <div class="option incorrect"><span class="option-letter">B</span>Forward to your manager to handle since it involves a misunderstanding</div>
+          <div class="option correct"><span class="option-letter">C</span>Acknowledge the client's concern directly, confirm you'll clarify the resolution, and commit to a specific follow-up time</div>
+          <div class="option incorrect"><span class="option-letter">D</span>Call the client immediately and explain what actually happened</div>
+        </div>
+        <div class="question-rationale"><strong>Why C:</strong> The first move is acknowledgment + commitment — not proof or escalation. Option D may be appropriate as a follow-up, but launching immediately into an explanation can feel defensive. The client needs to feel heard before they'll hear your resolution.</div>
+        <div class="q-meta">
+          <span class="q-meta-tag">Objectives 2, 3</span>
+          <span class="q-meta-tag">Apply</span>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-header">
+          <span class="q-num">Q4</span>
+          <span class="q-text">Which of the following interactions demonstrates Warmth with Authority?</span>
+        </div>
+        <div class="question-options">
+          <div class="option incorrect"><span class="option-letter">A</span>"I completely understand your frustration. I'll do my absolute best to get this sorted out for you."</div>
+          <div class="option correct"><span class="option-letter">B</span>"I hear you. Here's what we're going to do: I'll have a revised proposal to you by Friday at noon. Does that work for you?"</div>
+          <div class="option incorrect"><span class="option-letter">C</span>"This type of issue is outside my normal scope, but I'll see what I can do."</div>
+          <div class="option incorrect"><span class="option-letter">D</span>"No problem at all! I'll figure something out."</div>
+        </div>
+        <div class="question-rationale"><strong>Why B:</strong> Warmth with Authority combines acknowledgment with a specific, confident commitment. Option A is warm but lacks authority. Options C and D lack confidence and precision.</div>
+        <div class="q-meta">
+          <span class="q-meta-tag">Objectives 1, 2</span>
+          <span class="q-meta-tag">Apply</span>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-header">
+          <span class="q-num">Q5</span>
+          <span class="q-text">During a client call, you notice the client sounds frustrated but hasn't explicitly said so. Which response reflects the highest level of client-readiness?</span>
+        </div>
+        <div class="question-options">
+          <div class="option incorrect"><span class="option-letter">A</span>Continue with your agenda — don't presume to know how the client is feeling</div>
+          <div class="option correct"><span class="option-letter">B</span>Ask directly: "It sounds like there might be some concerns. Can we take a moment to address those first?"</div>
+          <div class="option incorrect"><span class="option-letter">C</span>Wrap the call quickly and follow up by email to avoid an uncomfortable conversation</div>
+          <div class="option incorrect"><span class="option-letter">D</span>Mention the frustration to your manager after the call so they can follow up</div>
+        </div>
+        <div class="question-rationale"><strong>Why B:</strong> Premium client communication means addressing what's in the room, not just what's on the agenda. Naming the dynamic directly demonstrates both Ownership and Warmth with Authority. Options A, C, and D are forms of avoidance.</div>
+        <div class="q-meta">
+          <span class="q-meta-tag">Objective 3</span>
+          <span class="q-meta-tag">Analyze</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- METADATA -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:#f0f9ff;">🏷️</div>
+      <span class="section-num">Section 8</span>
+      <span class="section-title">Course Metadata (LMS Upload Fields)</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="meta-key">Course ID</div><div class="meta-val">SWV-001</div></div>
+        <div class="meta-item"><div class="meta-key">Duration</div><div class="meta-val">52 minutes</div></div>
+        <div class="meta-item"><div class="meta-key">Difficulty</div><div class="meta-val">Beginner (no prerequisites)</div></div>
+        <div class="meta-item"><div class="meta-key">Target Audience</div><div class="meta-val">New associates; all client-facing roles</div></div>
+        <div class="meta-item"><div class="meta-key">Completion Type</div><div class="meta-val">Pass/Fail with score</div></div>
+        <div class="meta-item"><div class="meta-key">Passing Score</div><div class="meta-val">80%</div></div>
+        <div class="meta-item"><div class="meta-key">Certificate</div><div class="meta-val">Yes — auto-generated PDF on pass</div></div>
+        <div class="meta-item"><div class="meta-key">SCORM Standard</div><div class="meta-val">SCORM 1.2</div></div>
+        <div class="meta-item"><div class="meta-key">Completion Signal</div><div class="meta-val"><code>cmi.core.lesson_status = passed</code></div></div>
+        <div class="meta-item"><div class="meta-key">Tags</div><div class="meta-val">Onboarding, Communication, Brand Standards, Client Relations</div></div>
+        <div class="meta-item"><div class="meta-key">Review Cycle</div><div class="meta-val">Annual</div></div>
+        <div class="meta-item"><div class="meta-key">Language</div><div class="meta-val">English (US)</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-course -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!--            TEMPLATE PAGE              -->
+<!-- ══════════════════════════════════════ -->
+<div id="page-template" class="page">
+
+  <div style="background:var(--brand);color:#fff;padding:1.2rem 1.6rem;border-radius:var(--radius);margin-bottom:1.5rem;">
+    <h2 style="color:#fff;margin-bottom:.35rem;">Reusable LMS Module Template</h2>
+    <p style="color:rgba(255,255,255,.7);font-size:.88rem;margin:0;">Duplicate this structure for every new course. Replace highlighted placeholders. Keep all sections intact.</p>
+  </div>
+
+  <div class="template-section">
+    <div class="template-section-header">
+      <span class="ts-num">01</span>
+      <h3>Course Identity</h3>
+    </div>
+    <div class="template-section-body">
+      <h4>Title Formula</h4>
+      <div class="formula-box">[Action Verb Phrase]: [Specific Skill or Mindset] for [Target Audience]</div>
+      <ul class="rule-list">
+        <li>Lead with a verb or outcome-signal word (e.g., "Mastering," "Building," "The [Brand] Way")</li>
+        <li>Keep it under 10 words</li>
+        <li>Avoid: "leveraging," "synergizing," "next-level"</li>
+      </ul>
+      <h4>Overview Formula (75–100 words)</h4>
+      <div class="formula-box"><span class="placeholder">[PAIN POINT / CONTEXT]</span>. This course gives you <span class="placeholder">[specific tools/frameworks]</span>
+to <span class="placeholder">[measurable outcome]</span>. By the end, you will <span class="placeholder">[capability #1]</span>
+and <span class="placeholder">[capability #2]</span> — skills that apply <span class="placeholder">[immediately / on your next interaction]</span>.</div>
+    </div>
+  </div>
+
+  <div class="template-section">
+    <div class="template-section-header">
+      <span class="ts-num">02</span>
+      <h3>Learning Objectives</h3>
+    </div>
+    <div class="template-section-body">
+      <ul class="rule-list">
+        <li>Write exactly 3–4 objectives</li>
+        <li>Lead each with a Bloom's action verb — never "understand" or "know"</li>
+        <li>Each objective must be independently verifiable in assessment</li>
+        <li>Map each objective to at least one module and one quiz question</li>
+      </ul>
+      <div class="formula-box">[Bloom's Verb] + [specific skill/behavior] + [context/condition]
+
+Examples:
+  Apply Swivel's communication standards to written scenarios…
+  Identify the critical moments in a client interaction where tone determines satisfaction…
+  Construct a personal 30-day action plan aligned to [Company] standards…</div>
+
+      <div class="tip-grid">
+        <div class="tip-card do">
+          <div class="tip-card-label">✓ Strong Verbs</div>
+          <ul>
+            <li>Apply, Demonstrate, Execute</li>
+            <li>Analyze, Distinguish, Compare</li>
+            <li>Evaluate, Justify, Prioritize</li>
+            <li>Construct, Design, Develop</li>
+          </ul>
+        </div>
+        <div class="tip-card dont">
+          <div class="tip-card-label">✗ Avoid</div>
+          <ul>
+            <li>Understand (untestable)</li>
+            <li>Know (not observable)</li>
+            <li>Be aware of (passive)</li>
+            <li>Appreciate (subjective)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="template-section">
+    <div class="template-section-header">
+      <span class="ts-num">03</span>
+      <h3>6-Module Structure</h3>
+    </div>
+    <div class="template-section-body">
+      <p style="font-size:.9rem;color:var(--text-muted);">Total target: 45–60 minutes. Each module uses this schema:</p>
+      <div class="formula-box">MODULE [N]: [Title]
+─────────────────────────────────────────────
+Duration:     [X] minutes  (pick a target — not a range)
+Content Type: [Video | Reading | Scenario | Assessment]
+Purpose:      [What this module accomplishes — 1 sentence]
+
+CONTENT OUTLINE:
+  1. [Key segment] — [~time]
+  2. [Key segment] — [~time]
+  3. [Key segment] — [~time]
+
+LEARNING ACTIVITY:
+  Type:    [Knowledge check | Reflection | Scenario | None]
+  Prompt:  "[Exact text of the activity prompt]"
+
+COMPLETION TRIGGER:
+  [Video 100% watched | Quiz passed at X% | Reflection submitted]
+─────────────────────────────────────────────</div>
+
+      <h4>Module Role Guide</h4>
+      <table class="spec-table" style="margin-top:.5rem;">
+        <thead><tr><th>Module</th><th>Role</th><th>Best Format</th></tr></thead>
+        <tbody>
+          <tr><td>1 — Orientation</td><td>Set stakes, establish relevance, answer WIIFM</td><td>Short video (leadership voice)</td></tr>
+          <tr><td>2 — Core Concept</td><td>Introduce mental model / framework</td><td>Narrated slides or video + slides</td></tr>
+          <tr><td>3 — Demonstration</td><td>Show correct behavior in context</td><td>Contrast scenario video (wrong vs. right)</td></tr>
+          <tr><td>4 — Practice</td><td>Low-stakes application with feedback</td><td>Branching scenario (Storyline / Rise)</td></tr>
+          <tr><td>5 — Transfer</td><td>Connect to learner's real role</td><td>Reading + in-LMS reflection form</td></tr>
+          <tr><td>6 — Assessment</td><td>Verify learning, produce completion record</td><td>Graded quiz + certificate</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="template-section">
+    <div class="template-section-header">
+      <span class="ts-num">04</span>
+      <h3>Completion Criteria</h3>
+    </div>
+    <div class="template-section-body">
+      <p style="font-size:.9rem;color:var(--text-muted);">Every criterion must be LMS-enforceable. Never write "learners should…" — write the technical trigger.</p>
+      <div class="formula-box">□  All [N] modules opened and marked complete
+□  Minimum time-on-course: [X] minutes (LMS-tracked)
+□  [Interactive element]: completed (specific trigger)
+□  [Reflection/Action Plan]: submitted
+□  Knowledge Assessment: score ≥ [X]%
+   — Attempt 1 fail: immediate retry
+   — Attempt 2 fail: routed to review [specific modules]
+   — Attempt 3 fail: manager notified
+□  Course survey: [required / optional]
+
+Incomplete after [X] days → auto-reminder
+Incomplete after [X] days → manager notification</div>
+    </div>
+  </div>
+
+  <div class="template-section">
+    <div class="template-section-header">
+      <span class="ts-num">05–08</span>
+      <h3>Tech Specs · Action Plan · Assessment · Metadata</h3>
+    </div>
+    <div class="template-section-body">
+      <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:1rem;">The remaining sections follow fixed schemas. Apply the SWV-001 course (tab on the left) as your reference for all four — the structure is identical for every course you build.</p>
+
+      <h4>Quick Checklist — Before Development Handoff</h4>
+      <ul class="rule-list">
+        <li>3–4 learning objectives — all Bloom's Apply level or above</li>
+        <li>All 6 module durations specified (not ranges)</li>
+        <li>Completion triggers defined for every module</li>
+        <li>Assessment question pool: 1.5× final count (15 questions for 10-question test)</li>
+        <li>Every question tests application or analysis — zero recall-only questions</li>
+        <li>Action Plan includes free-text commitments + specific accountability dates</li>
+        <li>Metadata short description ≤ 160 characters</li>
+        <li>Annual review date set in metadata</li>
+      </ul>
+
+      <h4>Common Mistakes</h4>
+      <table class="spec-table">
+        <thead><tr><th>Mistake</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Objectives using "understand"</td><td>Replace with Apply / Analyze / Evaluate verb</td></tr>
+          <tr><td>Module durations as ranges</td><td>Pick one target number</td></tr>
+          <tr><td>Completion criteria that can't be enforced</td><td>Tie to a measurable LMS trigger</td></tr>
+          <tr><td>Quiz questions testing recall</td><td>Frame as scenario: "A client does X — what do you do?"</td></tr>
+          <tr><td>Action plan = rating scales only</td><td>Include free-text commitments and accountability partners</td></tr>
+          <tr><td>Module 6 as passive review</td><td>Make it synthesis + forward-facing close</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page-template -->
+
+</main>
+
+<footer>
+  SWV-001 · The Swivel Way · LMS Course Design Document · v1.0
+</footer>
+
+<script>
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleSection(header) {
+    const card = header.closest('.section-card');
+    card.classList.toggle('open');
+  }
+
+  // Rating dots interaction
+  document.querySelectorAll('.rating-dots').forEach(group => {
+    const dots = group.querySelectorAll('.dot');
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        dots.forEach((d, j) => {
+          d.style.background = j <= i ? 'var(--accent)' : '';
+          d.style.borderColor = j <= i ? 'var(--accent)' : 'var(--border)';
+        });
+      });
+    });
+  });
+</script>
+</body>
+</html>
